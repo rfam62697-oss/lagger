@@ -10,19 +10,17 @@ local autoSlapEnabled = false
 local SLAP_NAME = "Dark Matter Slap"
 
 -- =========================
--- Anti-lag: limpiar accesorios de jugadores y clones
+-- Anti-lag: limpiar accesorios
 -- =========================
 local function clearAccessories(char)
     if not char or not char:IsA("Model") then return end
 
-    -- Borrar accesorios actuales
     for _, v in ipairs(char:GetChildren()) do
         if v:IsA('Accessory') then
             v:Destroy()
         end
     end
 
-    -- Detectar accesorios añadidos en clones o personajes
     char.DescendantAdded:Connect(function(desc)
         if desc:IsA("Accessory") then
             task.delay(0, function()
@@ -51,7 +49,7 @@ end
 Players.PlayerAdded:Connect(hookPlayer)
 
 -- =========================
--- GUI
+-- GUI MODERNO
 -- =========================
 local playerGui = player:WaitForChild("PlayerGui")
 local screenGui = Instance.new("ScreenGui")
@@ -60,34 +58,84 @@ screenGui.ResetOnSpawn = false
 screenGui.Parent = playerGui
 
 local frame = Instance.new("Frame")
-frame.Size = UDim2.new(0, 250, 0, 150)
-frame.Position = UDim2.new(0, 10, 1, -160)
-frame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+frame.Size = UDim2.new(0, 300, 0, 200)
+frame.Position = UDim2.new(0, 10, 1, -220)
+frame.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
 frame.BorderSizePixel = 0
-frame.BackgroundTransparency = 0.1
+frame.AnchorPoint = Vector2.new(0,0)
 frame.Parent = screenGui
+frame.ClipsDescendants = true
+frame.Rotation = -5 -- efecto inicial sutil
+frame.Position = frame.Position + UDim2.new(0,0,0,20) -- animación inicial
 
+-- Animación de entrada suave
+game:GetService("TweenService"):Create(frame, TweenInfo.new(0.6, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Rotation = 0, Position = UDim2.new(0, 10, 1, -200)}):Play()
+
+-- Título
 local title = Instance.new("TextLabel")
 title.Text = "REP ANTI LAG"
-title.Size = UDim2.new(1, 0, 0, 40)
+title.Size = UDim2.new(1, -20, 0, 50)
+title.Position = UDim2.new(0, 10, 0, 10)
 title.BackgroundTransparency = 1
 title.TextColor3 = Color3.fromRGB(255, 255, 255)
-title.Font = Enum.Font.SourceSansBold
+title.Font = Enum.Font.GothamBold
 title.TextSize = 24
+title.TextXAlignment = Enum.TextXAlignment.Left
 title.Parent = frame
 
+-- Separador
+local separator = Instance.new("Frame")
+separator.Size = UDim2.new(1, -20, 0, 2)
+separator.Position = UDim2.new(0, 10, 0, 60)
+separator.BackgroundColor3 = Color3.fromRGB(80, 80, 80)
+separator.BorderSizePixel = 0
+separator.Parent = frame
+
+-- Botón Auto-Slap
 local button = Instance.new("TextButton")
-button.Size = UDim2.new(0.8, 0, 0, 50)
-button.Position = UDim2.new(0.1, 0, 0.5, -25)
-button.BackgroundColor3 = Color3.fromRGB(80, 80, 80)
+button.Size = UDim2.new(0.9, 0, 0, 50)
+button.Position = UDim2.new(0.05, 0, 0, 80)
+button.BackgroundColor3 = Color3.fromRGB(70, 70, 70)
 button.Text = "FPS DEVOURER V2"
 button.TextColor3 = Color3.fromRGB(255, 255, 255)
-button.Font = Enum.Font.SourceSansBold
+button.Font = Enum.Font.GothamSemibold
 button.TextSize = 20
+button.AutoButtonColor = false
 button.Parent = frame
+button.ClipsDescendants = true
+button.BorderSizePixel = 0
+button.BackgroundTransparency = 0.1
+button.TextScaled = true
+button.TextWrapped = true
+button.TextStrokeTransparency = 0.8
+
+-- Hover effect con Tween
+local TweenService = game:GetService("TweenService")
+button.MouseEnter:Connect(function()
+    TweenService:Create(button, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(100,100,100)}):Play()
+end)
+button.MouseLeave:Connect(function()
+    if autoSlapEnabled then
+        TweenService:Create(button, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(0,200,0)}):Play()
+    else
+        TweenService:Create(button, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(70,70,70)}):Play()
+    end
+end)
+
+-- Estado
+local status = Instance.new("TextLabel")
+status.Size = UDim2.new(0.9, 0, 0, 30)
+status.Position = UDim2.new(0.05, 0, 0, 140)
+status.BackgroundTransparency = 1
+status.TextColor3 = Color3.fromRGB(200,200,200)
+status.Font = Enum.Font.Gotham
+status.TextSize = 16
+status.Text = "Estado: DESACTIVADO"
+status.TextXAlignment = Enum.TextXAlignment.Left
+status.Parent = frame
 
 -- =========================
--- Auto-slap que funciona incluso con Brainrot u otra herramienta
+-- Auto-slap robusto
 -- =========================
 local function toggleDarkMatterSlap()
     local char = player.Character
@@ -107,15 +155,13 @@ local function toggleDarkMatterSlap()
     local humanoid = char:FindFirstChild("Humanoid")
     if not humanoid then return end
 
-    local currentTool = humanoid:FindFirstChildOfClass("Tool") -- Guardar herramienta actual
+    local currentTool = humanoid:FindFirstChildOfClass("Tool")
     local wasEquipped = (tool.Parent == char)
 
-    -- Equipar Slap temporalmente aunque haya otra herramienta
     if not wasEquipped then
         humanoid:EquipTool(tool)
     end
 
-    -- Activar Slap
     pcall(function()
         if tool:FindFirstChildOfClass("RemoteEvent") then
             tool:FindFirstChildOfClass("RemoteEvent"):FireServer()
@@ -126,7 +172,6 @@ local function toggleDarkMatterSlap()
 
     task.wait(0.05)
 
-    -- Volver a la herramienta anterior (Brainrot o lo que sea)
     if not wasEquipped then
         if currentTool and currentTool ~= tool then
             humanoid:EquipTool(currentTool)
@@ -148,26 +193,23 @@ end
 local function toggleAutoSlap()
     autoSlapEnabled = not autoSlapEnabled
     if autoSlapEnabled then
-        button.BackgroundColor3 = Color3.fromRGB(0, 200, 0)
-        warn("FPS DEVOURER V2 ACTIVADO")
+        TweenService:Create(button, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(0,200,0)}):Play()
         startAutoSlap()
     else
-        button.BackgroundColor3 = Color3.fromRGB(80, 80, 80)
-        warn("FPS DEVOURER V2 DESACTIVADO")
+        TweenService:Create(button, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(70,70,70)}):Play()
     end
+    status.Text = "Estado: " .. (autoSlapEnabled and "ACTIVADO" or "DESACTIVADO")
 end
 
 button.MouseButton1Click:Connect(toggleAutoSlap)
-
 UserInputService.InputBegan:Connect(function(input, gameProcessed)
-    if gameProcessed then return end
     if input.KeyCode == Enum.KeyCode.R then
         toggleAutoSlap()
     end
 end)
 
 -- =========================
--- Draggable menú
+-- Draggable menú con Tween
 -- =========================
 local dragging
 local dragInput
@@ -209,5 +251,4 @@ UserInputService.InputChanged:Connect(function(input)
         update(input)
     end
 end)
-
 
