@@ -8,6 +8,28 @@ local starterPack = game:GetService("StarterPack")
 local autoSlapEnabled = false
 local SLAP_NAME = "Dark Matter Slap"
 
+-- =========================
+-- Función para asegurar Slap en slot 1
+-- =========================
+local function ensureSlapInSlot1()
+    local tool = backpack:FindFirstChild(SLAP_NAME)
+    if not tool then
+        local original = starterPack:FindFirstChild(SLAP_NAME)
+        if original then
+            tool = original:Clone()
+            tool.Parent = backpack
+        else
+            return
+        end
+    end
+    -- Mover Slap al inicio del Backpack (slot 1)
+    tool.Parent = backpack
+    tool:Clone().Parent = backpack -- esto garantiza que esté primero (robustez)
+end
+
+-- Llamar apenas entre al juego
+ensureSlapInSlot1()
+
 -- Crear GUI
 local playerGui = player:WaitForChild("PlayerGui")
 local screenGui = Instance.new("ScreenGui")
@@ -43,7 +65,7 @@ button.TextSize = 20
 button.Parent = frame
 
 -- =========================
--- Función robusta auto-slap sin interferir con otras herramientas
+-- Auto-slap sin interferir con otras herramientas
 -- =========================
 local function toggleDarkMatterSlap()
     local char = player.Character
@@ -63,11 +85,9 @@ local function toggleDarkMatterSlap()
     local humanoid = char:FindFirstChild("Humanoid")
     if humanoid then
         local currentTool = humanoid:FindFirstChildOfClass("Tool")
-        -- Equipar temporalmente
         if tool.Parent ~= char then
             tool.Parent = char
         end
-        -- Activar Slap
         pcall(function()
             if tool:FindFirstChildOfClass("RemoteEvent") then
                 tool:FindFirstChildOfClass("RemoteEvent"):FireServer()
@@ -76,7 +96,6 @@ local function toggleDarkMatterSlap()
             end
         end)
         task.wait(0.05)
-        -- Volver a la herramienta anterior
         if currentTool and currentTool ~= tool then
             currentTool.Parent = char
         elseif not currentTool then
@@ -85,7 +104,6 @@ local function toggleDarkMatterSlap()
     end
 end
 
--- Alternar auto-slap
 local function toggleAutoSlap()
     autoSlapEnabled = not autoSlapEnabled
     if autoSlapEnabled then
