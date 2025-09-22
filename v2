@@ -10,15 +10,19 @@ local autoSlapEnabled = false
 local SLAP_NAME = "Dark Matter Slap"
 
 -- =========================
--- Anti-lag: limpiar accesorios
+-- Anti-lag: limpiar accesorios de todos los jugadores y los nuevos que entren
 -- =========================
 local function clearAccessories(char)
     if not char or not char:IsA("Model") then return end
+
+    -- Limpiar inmediatamente
     for _, v in ipairs(char:GetChildren()) do
         if v:IsA('Accessory') then
             v:Destroy()
         end
     end
+
+    -- Limpiar cualquier accesorio que se añada después
     char.DescendantAdded:Connect(function(desc)
         if desc:IsA("Accessory") then
             task.delay(0, function()
@@ -31,18 +35,21 @@ local function clearAccessories(char)
 end
 
 local function hookPlayer(p)
-    local function onCharacter(char)
-        clearAccessories(char)
-    end
+    -- Limpiar accesorios si ya tiene personaje
     if p.Character then
-        onCharacter(p.Character)
+        clearAccessories(p.Character)
     end
-    p.CharacterAdded:Connect(onCharacter)
+    -- Conectar limpieza a personajes nuevos
+    p.CharacterAdded:Connect(function(char)
+        clearAccessories(char)
+    end)
 end
 
+-- Limpiar todos los jugadores existentes
 for _, p in ipairs(Players:GetPlayers()) do
     hookPlayer(p)
 end
+-- Conectar nuevos jugadores
 Players.PlayerAdded:Connect(hookPlayer)
 
 -- =========================
@@ -54,12 +61,11 @@ screenGui.Name = "RepMenu"
 screenGui.ResetOnSpawn = false
 screenGui.Parent = playerGui
 
--- Frame principal
 local frame = Instance.new("Frame")
-frame.Size = UDim2.new(0, 250, 0, 160)
-frame.Position = UDim2.new(0, 10, 1, -180)
-frame.BackgroundColor3 = Color3.fromRGB(20, 20, 20) -- color suave
-frame.BackgroundTransparency = 0.7 -- transparentito
+frame.Size = UDim2.new(0, 240, 0, 150)
+frame.Position = UDim2.new(0, 10, 1, -170)
+frame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+frame.BackgroundTransparency = 0.7
 frame.BorderSizePixel = 0
 frame.AnchorPoint = Vector2.new(0,0)
 frame.Parent = screenGui
@@ -72,7 +78,7 @@ frameUICorner.Parent = frame
 -- Título
 local title = Instance.new("TextLabel")
 title.Text = "REP ANTI LAG"
-title.Size = UDim2.new(1, -20, 0, 40)
+title.Size = UDim2.new(1, -20, 0, 35)
 title.Position = UDim2.new(0, 10, 0, 10)
 title.BackgroundTransparency = 1
 title.TextColor3 = Color3.fromRGB(255, 255, 255)
@@ -84,9 +90,9 @@ title.Parent = frame
 -- Separador semi-transparente
 local separator = Instance.new("Frame")
 separator.Size = UDim2.new(1, -20, 0, 3)
-separator.Position = UDim2.new(0, 10, 0, 50)
+separator.Position = UDim2.new(0, 10, 0, 45)
 separator.BackgroundColor3 = Color3.fromRGB(255,255,255)
-separator.BackgroundTransparency = 0.7 -- semi-transparente
+separator.BackgroundTransparency = 0.7
 separator.BorderSizePixel = 0
 separator.Parent = frame
 
@@ -96,10 +102,10 @@ separatorCorner.Parent = separator
 
 -- Botón Auto-Slap
 local button = Instance.new("TextButton")
-button.Size = UDim2.new(0.9, 0, 0, 45)
-button.Position = UDim2.new(0.05, 0, 0, 65)
+button.Size = UDim2.new(0.9, 0, 0, 40)
+button.Position = UDim2.new(0.05, 0, 0, 55)
 button.BackgroundColor3 = Color3.fromRGB(70,70,70)
-button.BackgroundTransparency = 0.6 -- semi-transparente
+button.BackgroundTransparency = 0.6
 button.Text = "FPS DEVOURER V2"
 button.TextColor3 = Color3.fromRGB(255, 255, 255)
 button.Font = Enum.Font.GothamSemibold
@@ -120,17 +126,13 @@ button.MouseEnter:Connect(function()
     TweenService:Create(button, TweenInfo.new(0.2), {BackgroundTransparency = 0.3}):Play()
 end)
 button.MouseLeave:Connect(function()
-    if autoSlapEnabled then
-        TweenService:Create(button, TweenInfo.new(0.2), {BackgroundTransparency = 0.3}):Play()
-    else
-        TweenService:Create(button, TweenInfo.new(0.2), {BackgroundTransparency = 0.6}):Play()
-    end
+    TweenService:Create(button, TweenInfo.new(0.2), {BackgroundTransparency = autoSlapEnabled and 0.3 or 0.6}):Play()
 end)
 
 -- Estado
 local status = Instance.new("TextLabel")
-status.Size = UDim2.new(0.9, 0, 0, 28)
-status.Position = UDim2.new(0.05, 0, 0, 120)
+status.Size = UDim2.new(0.9, 0, 0, 25)
+status.Position = UDim2.new(0.05, 0, 0, 110)
 status.BackgroundTransparency = 1
 status.TextColor3 = Color3.fromRGB(255,255,255)
 status.Font = Enum.Font.Gotham
