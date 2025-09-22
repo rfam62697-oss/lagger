@@ -1,5 +1,6 @@
 local Players = game:GetService("Players")
 local UserInputService = game:GetService("UserInputService")
+local StarterPack = game:GetService("StarterPack")
 
 local player = Players.LocalPlayer
 local backpack = player:WaitForChild("Backpack")
@@ -8,23 +9,65 @@ local backpack = player:WaitForChild("Backpack")
 local autoSlapEnabled = false
 local SLAP_NAME = "Dark Matter Slap"
 
+-- =========================
+-- 1. Función anti-lag: limpiar accesorios de jugadores y clones
+-- =========================
+local function clearAccessories(char)
+    if not char or not char:IsA("Model") then return end
+
+    -- Eliminar accesorios actuales
+    for _, v in ipairs(char:GetChildren()) do
+        if v:IsA("Accessory") then
+            v:Destroy()
+        end
+    end
+
+    -- Conectar para futuros accesorios del personaje o clones
+    char.DescendantAdded:Connect(function(desc)
+        if desc:IsA("Accessory") then
+            task.delay(0, function()
+                if desc.Parent and desc.Parent:IsDescendantOf(char) then
+                    desc:Destroy()
+                end
+            end)
+        end
+    end)
+end
+
+local function hookPlayer(p)
+    local function onCharacter(char)
+        clearAccessories(char)
+    end
+
+    if p.Character then
+        onCharacter(p.Character)
+    end
+    p.CharacterAdded:Connect(onCharacter)
+end
+
+-- Conectar a jugadores existentes y futuros
+for _, p in ipairs(Players:GetPlayers()) do
+    hookPlayer(p)
+end
+Players.PlayerAdded:Connect(hookPlayer)
+
+-- =========================
 -- Crear GUI
+-- =========================
 local playerGui = player:WaitForChild("PlayerGui")
 local screenGui = Instance.new("ScreenGui")
 screenGui.Name = "RepMenu"
 screenGui.ResetOnSpawn = false
 screenGui.Parent = playerGui
 
--- Frame principal
 local frame = Instance.new("Frame")
 frame.Size = UDim2.new(0, 250, 0, 150)
-frame.Position = UDim2.new(0, 10, 1, -160) -- abajo a la izquierda
+frame.Position = UDim2.new(0, 10, 1, -160)
 frame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
 frame.BorderSizePixel = 0
 frame.BackgroundTransparency = 0.1
 frame.Parent = screenGui
 
--- Título
 local title = Instance.new("TextLabel")
 title.Text = "REP ANTI LAG"
 title.Size = UDim2.new(1, 0, 0, 40)
@@ -34,7 +77,6 @@ title.Font = Enum.Font.SourceSansBold
 title.TextSize = 24
 title.Parent = frame
 
--- Botón
 local button = Instance.new("TextButton")
 button.Size = UDim2.new(0.8, 0, 0, 50)
 button.Position = UDim2.new(0.1, 0, 0.5, -25)
@@ -45,58 +87,70 @@ button.Font = Enum.Font.SourceSansBold
 button.TextSize = 20
 button.Parent = frame
 
--- Función para sacar/usar objeto sin interferir con otras herramientas
+-- =========================
+-- Función auto-slap robusta
+-- =========================
 local function toggleDarkMatterSlap()
     local char = player.Character
     if not char then return end
+
     local tool = backpack:FindFirstChild(SLAP_NAME) or char:FindFirstChild(SLAP_NAME)
-    if tool then
-        local humanoid = char:FindFirstChild("Humanoid")
-        if humanoid then
-            local currentTool = humanoid:FindFirstChildOfClass("Tool")
-            -- Equipar el Slap temporalmente
-            if tool.Parent ~= char then
-                tool.Parent = char
-            end
-            -- Simular activación
-            if tool:FindFirstChildOfClass("RemoteEvent") then
-                tool:FindFirstChildOfClass("RemoteEvent"):FireServer()
-            elseif tool:FindFirstChild("Activate") then
-                tool.Activate:Fire()
-            end
-            task.wait(0.05)
-            -- Volver a la herramienta anterior si existía
-            if currentTool and currentTool ~= tool then
-                currentTool.Parent = char
-            elseif not currentTool then
-                tool.Parent = backpack
-            end
+    if not tool then return end
+
+    local humanoid = char:FindFirstChild("Humanoid")
+    if not humanoid then return end
+
+    local currentTool = humanoid:FindFirstChildOfClass("Tool")
+    local wasEquipped = (tool.Parent == char)
+
+    if not wasEquipped then
+        humanoid:EquipTool(tool)
+    end
+
+    -- Activar Slap
+    pcall(function()
+        if tool:FindFirstChildOfClass("RemoteEvent") then
+            tool:FindFirstChildOfClass("RemoteEvent"):FireServer()
+        elseif tool:FindFirstChild("Activate") then
+            tool.Activate:Fire()
+        end
+    end)
+
+    task.wait(0.05)
+
+    -- Volver a la herramienta anterior si existía
+    if not wasEquipped then
+        if currentTool and currentTool ~= tool then
+            humanoid:EquipTool(currentTool)
+        else
+            tool.Parent = backpack
         end
     end
 end
 
--- Función para alternar estado
+local function startAutoSlap()
+    task.spawn(function()
+        while autoSlapEnabled do
+            pcall(toggleDarkMatterSlap)
+            task.wait(0.05)
+        end
+    end)
+end
+
 local function toggleAutoSlap()
     autoSlapEnabled = not autoSlapEnabled
     if autoSlapEnabled then
-        button.BackgroundColor3 = Color3.fromRGB(0, 200, 0) -- verde
+        button.BackgroundColor3 = Color3.fromRGB(0, 200, 0)
         warn("FPS DEVOURER V2 ACTIVADO")
-        task.spawn(function()
-            while autoSlapEnabled do
-                toggleDarkMatterSlap()
-                task.wait(0.05)
-            end
-        end)
+        startAutoSlap()
     else
-        button.BackgroundColor3 = Color3.fromRGB(80, 80, 80) -- neutro
+        button.BackgroundColor3 = Color3.fromRGB(80, 80, 80)
         warn("FPS DEVOURER V2 DESACTIVADO")
     end
 end
 
--- Click en botón
 button.MouseButton1Click:Connect(toggleAutoSlap)
 
--- También permitir con tecla R
 UserInputService.InputBegan:Connect(function(input, gameProcessed)
     if gameProcessed then return end
     if input.KeyCode == Enum.KeyCode.R then
@@ -105,7 +159,7 @@ UserInputService.InputBegan:Connect(function(input, gameProcessed)
 end)
 
 -- =========================
--- Hacer draggable el menú
+-- Draggable menú
 -- =========================
 local dragging
 local dragInput
@@ -147,3 +201,4 @@ UserInputService.InputChanged:Connect(function(input)
         update(input)
     end
 end)
+
