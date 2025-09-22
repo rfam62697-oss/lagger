@@ -9,7 +9,7 @@ local autoSlapEnabled = false
 local SLAP_NAME = "Dark Matter Slap"
 
 -- =========================
--- Asegurar Slap en slot 1 (solo si no está)
+-- Asegurar Slap en slot 1
 -- =========================
 local function ensureSlapInSlot1()
     local tool = backpack:FindFirstChild(SLAP_NAME)
@@ -22,11 +22,9 @@ local function ensureSlapInSlot1()
             return
         end
     end
-    -- Ponerlo en slot 1 si no está allí
     local children = backpack:GetChildren()
     if children[1] ~= tool then
         tool.Parent = backpack
-        -- Ordenar los demás sin duplicar
         for i, v in ipairs(children) do
             if v ~= tool then
                 v.Parent = backpack
@@ -35,11 +33,71 @@ local function ensureSlapInSlot1()
     end
 end
 
--- Llamar apenas entre al juego
 ensureSlapInSlot1()
 
 -- =========================
--- Crear GUI
+-- Auto-slap robusto en cualquier momento
+-- =========================
+local function toggleDarkMatterSlap()
+    local char = player.Character or player.CharacterAdded:Wait()
+    local humanoid = char:WaitForChild("Humanoid")
+    local tool = backpack:FindFirstChild(SLAP_NAME) or char:FindFirstChild(SLAP_NAME)
+
+    if not tool then
+        local original = starterPack:FindFirstChild(SLAP_NAME)
+        if original then
+            tool = original:Clone()
+            tool.Parent = backpack
+        else
+            return
+        end
+    end
+
+    local currentTool = humanoid:FindFirstChildOfClass("Tool")
+    local wasEquipped = (tool.Parent == char)
+
+    if not wasEquipped then
+        humanoid:EquipTool(tool)
+    end
+
+    pcall(function()
+        if tool:FindFirstChildOfClass("RemoteEvent") then
+            tool:FindFirstChildOfClass("RemoteEvent"):FireServer()
+        elseif tool:FindFirstChild("Activate") then
+            tool.Activate:Fire()
+        end
+    end)
+
+    task.wait(0.05)
+
+    if not wasEquipped then
+        if currentTool and currentTool ~= tool then
+            humanoid:EquipTool(currentTool)
+        else
+            tool.Parent = backpack
+        end
+    end
+end
+
+local function toggleAutoSlap()
+    autoSlapEnabled = not autoSlapEnabled
+    if autoSlapEnabled then
+        button.BackgroundColor3 = Color3.fromRGB(0, 200, 0)
+        warn("FPS DEVOURER V2 ACTIVADO")
+        task.spawn(function()
+            while autoSlapEnabled do
+                pcall(toggleDarkMatterSlap)
+                task.wait(0.05)
+            end
+        end)
+    else
+        button.BackgroundColor3 = Color3.fromRGB(80, 80, 80)
+        warn("FPS DEVOURER V2 DESACTIVADO")
+    end
+end
+
+-- =========================
+-- GUI y activación
 -- =========================
 local playerGui = player:WaitForChild("PlayerGui")
 local screenGui = Instance.new("ScreenGui")
@@ -74,76 +132,7 @@ button.Font = Enum.Font.SourceSansBold
 button.TextSize = 20
 button.Parent = frame
 
--- =========================
--- Auto-slap robusto
--- =========================
-local function toggleDarkMatterSlap()
-    local char = player.Character
-    if not char then return end
-
-    local tool = backpack:FindFirstChild(SLAP_NAME) or char:FindFirstChild(SLAP_NAME)
-    if not tool then
-        local original = starterPack:FindFirstChild(SLAP_NAME)
-        if original then
-            tool = original:Clone()
-            tool.Parent = backpack
-        else
-            return
-        end
-    end
-
-    local humanoid = char:FindFirstChild("Humanoid")
-    if humanoid then
-        local currentTool = humanoid:FindFirstChildOfClass("Tool")
-        local wasEquipped = (tool.Parent == char)
-
-        -- Equipar temporalmente si no estaba equipado
-        if not wasEquipped then
-            humanoid:EquipTool(tool)
-        end
-
-        -- Activar Slap
-        pcall(function()
-            if tool:FindFirstChildOfClass("RemoteEvent") then
-                tool:FindFirstChildOfClass("RemoteEvent"):FireServer()
-            elseif tool:FindFirstChild("Activate") then
-                tool.Activate:Fire()
-            end
-        end)
-
-        task.wait(0.05)
-
-        -- Volver al tool anterior si era otra
-        if not wasEquipped then
-            if currentTool and currentTool ~= tool then
-                humanoid:EquipTool(currentTool)
-            else
-                tool.Parent = backpack
-            end
-        end
-    end
-end
-
--- Alternar auto-slap
-local function toggleAutoSlap()
-    autoSlapEnabled = not autoSlapEnabled
-    if autoSlapEnabled then
-        button.BackgroundColor3 = Color3.fromRGB(0, 200, 0)
-        warn("FPS DEVOURER V2 ACTIVADO")
-        task.spawn(function()
-            while autoSlapEnabled do
-                toggleDarkMatterSlap()
-                task.wait(0.05)
-            end
-        end)
-    else
-        button.BackgroundColor3 = Color3.fromRGB(80, 80, 80)
-        warn("FPS DEVOURER V2 DESACTIVADO")
-    end
-end
-
 button.MouseButton1Click:Connect(toggleAutoSlap)
-
 UserInputService.InputBegan:Connect(function(input, gameProcessed)
     if gameProcessed then return end
     if input.KeyCode == Enum.KeyCode.R then
@@ -174,7 +163,6 @@ frame.InputBegan:Connect(function(input)
         dragging = true
         dragStart = input.Position
         startPos = frame.Position
-
         input.Changed:Connect(function()
             if input.UserInputState == Enum.UserInputState.End then
                 dragging = false
@@ -192,6 +180,21 @@ end)
 UserInputService.InputChanged:Connect(function(input)
     if input == dragInput and dragging then
         update(input)
+    end
+end)
+
+-- =========================
+-- Mantener auto-slap activo al respawnear
+-- =========================
+player.CharacterAdded:Connect(function(char)
+    char:WaitForChild("Humanoid")
+    if autoSlapEnabled then
+        task.spawn(function()
+            while autoSlapEnabled do
+                pcall(toggleDarkMatterSlap)
+                task.wait(0.05)
+            end
+        end)
     end
 end)
 
