@@ -206,11 +206,12 @@ local function toggleAutoSlap()
     status.Text = "Estado: " .. (autoSlapEnabled and "ACTIVADO" or "DESACTIVADO")
 end
 
--- Click en botón
 button.MouseButton1Click:Connect(toggleAutoSlap)
 
--- Tecla G para activar/desactivar
-UserInputService.InputBegan:Connect(function(input, gameProcessed)
+-- =========================
+-- Activar con la tecla G
+-- =========================
+UserInputService.InputBegan:Connect(function(input)
     if input.UserInputType ~= Enum.UserInputType.Keyboard then return end
     if input.KeyCode == Enum.KeyCode.G then
         toggleAutoSlap()
