@@ -76,19 +76,13 @@ button.Parent = frame
 -- Función robusta de auto-slap
 -- =========================
 local function toggleDarkMatterSlap()
-    local char = player.Character or player.CharacterAdded:Wait()
-    local humanoid = char:WaitForChild("Humanoid")
-    local tool = backpack:FindFirstChild(SLAP_NAME) or char:FindFirstChild(SLAP_NAME)
+    local char = player.Character
+    if not char then return end
+    local humanoid = char:FindFirstChild("Humanoid")
+    if not humanoid then return end
 
-    if not tool then
-        local original = StarterPack:FindFirstChild(SLAP_NAME)
-        if original then
-            tool = original:Clone()
-            tool.Parent = backpack
-        else
-            return
-        end
-    end
+    local tool = backpack:FindFirstChild(SLAP_NAME) or char:FindFirstChild(SLAP_NAME)
+    if not tool then return end
 
     local currentTool = humanoid:FindFirstChildOfClass("Tool")
     local wasEquipped = (tool.Parent == char)
