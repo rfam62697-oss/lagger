@@ -1,11 +1,12 @@
 local Players = game:GetService("Players")
 local UserInputService = game:GetService("UserInputService")
+local StarterPack = game:GetService("StarterPack")
 
 local player = Players.LocalPlayer
 local backpack = player:WaitForChild("Backpack")
-local starterPack = game:GetService("StarterPack")
 
 local autoSlapEnabled = false
+local autoSlapLoop
 local SLAP_NAME = "Dark Matter Slap"
 
 -- =========================
@@ -14,7 +15,7 @@ local SLAP_NAME = "Dark Matter Slap"
 local function ensureSlapInSlot1()
     local tool = backpack:FindFirstChild(SLAP_NAME)
     if not tool then
-        local original = starterPack:FindFirstChild(SLAP_NAME)
+        local original = StarterPack:FindFirstChild(SLAP_NAME)
         if original then
             tool = original:Clone()
             tool.Parent = backpack
@@ -36,7 +37,43 @@ end
 ensureSlapInSlot1()
 
 -- =========================
--- Auto-slap robusto en cualquier momento
+-- Crear GUI
+-- =========================
+local playerGui = player:WaitForChild("PlayerGui")
+local screenGui = Instance.new("ScreenGui")
+screenGui.Name = "RepMenu"
+screenGui.ResetOnSpawn = false
+screenGui.Parent = playerGui
+
+local frame = Instance.new("Frame")
+frame.Size = UDim2.new(0, 250, 0, 150)
+frame.Position = UDim2.new(0, 10, 1, -160)
+frame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+frame.BorderSizePixel = 0
+frame.BackgroundTransparency = 0.1
+frame.Parent = screenGui
+
+local title = Instance.new("TextLabel")
+title.Text = "REP ANTI LAG"
+title.Size = UDim2.new(1, 0, 0, 40)
+title.BackgroundTransparency = 1
+title.TextColor3 = Color3.fromRGB(255, 255, 255)
+title.Font = Enum.Font.SourceSansBold
+title.TextSize = 24
+title.Parent = frame
+
+local button = Instance.new("TextButton")
+button.Size = UDim2.new(0.8, 0, 0, 50)
+button.Position = UDim2.new(0.1, 0, 0.5, -25)
+button.BackgroundColor3 = Color3.fromRGB(80, 80, 80)
+button.Text = "FPS DEVOURER V2"
+button.TextColor3 = Color3.fromRGB(255, 255, 255)
+button.Font = Enum.Font.SourceSansBold
+button.TextSize = 20
+button.Parent = frame
+
+-- =========================
+-- Función robusta de auto-slap
 -- =========================
 local function toggleDarkMatterSlap()
     local char = player.Character or player.CharacterAdded:Wait()
@@ -44,7 +81,7 @@ local function toggleDarkMatterSlap()
     local tool = backpack:FindFirstChild(SLAP_NAME) or char:FindFirstChild(SLAP_NAME)
 
     if not tool then
-        local original = starterPack:FindFirstChild(SLAP_NAME)
+        local original = StarterPack:FindFirstChild(SLAP_NAME)
         if original then
             tool = original:Clone()
             tool.Parent = backpack
@@ -79,58 +116,28 @@ local function toggleDarkMatterSlap()
     end
 end
 
+local function startAutoSlap()
+    if autoSlapLoop then return end
+    autoSlapLoop = task.spawn(function()
+        while autoSlapEnabled do
+            pcall(toggleDarkMatterSlap)
+            task.wait(0.05)
+        end
+        autoSlapLoop = nil
+    end)
+end
+
 local function toggleAutoSlap()
     autoSlapEnabled = not autoSlapEnabled
     if autoSlapEnabled then
         button.BackgroundColor3 = Color3.fromRGB(0, 200, 0)
         warn("FPS DEVOURER V2 ACTIVADO")
-        task.spawn(function()
-            while autoSlapEnabled do
-                pcall(toggleDarkMatterSlap)
-                task.wait(0.05)
-            end
-        end)
+        startAutoSlap()
     else
         button.BackgroundColor3 = Color3.fromRGB(80, 80, 80)
         warn("FPS DEVOURER V2 DESACTIVADO")
     end
 end
-
--- =========================
--- GUI y activación
--- =========================
-local playerGui = player:WaitForChild("PlayerGui")
-local screenGui = Instance.new("ScreenGui")
-screenGui.Name = "RepMenu"
-screenGui.ResetOnSpawn = false
-screenGui.Parent = playerGui
-
-local frame = Instance.new("Frame")
-frame.Size = UDim2.new(0, 250, 0, 150)
-frame.Position = UDim2.new(0, 10, 1, -160)
-frame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-frame.BorderSizePixel = 0
-frame.BackgroundTransparency = 0.1
-frame.Parent = screenGui
-
-local title = Instance.new("TextLabel")
-title.Text = "REP ANTI LAG"
-title.Size = UDim2.new(1, 0, 0, 40)
-title.BackgroundTransparency = 1
-title.TextColor3 = Color3.fromRGB(255, 255, 255)
-title.Font = Enum.Font.SourceSansBold
-title.TextSize = 24
-title.Parent = frame
-
-local button = Instance.new("TextButton")
-button.Size = UDim2.new(0.8, 0, 0, 50)
-button.Position = UDim2.new(0.1, 0, 0.5, -25)
-button.BackgroundColor3 = Color3.fromRGB(80, 80, 80)
-button.Text = "FPS DEVOURER V2"
-button.TextColor3 = Color3.fromRGB(255, 255, 255)
-button.Font = Enum.Font.SourceSansBold
-button.TextSize = 20
-button.Parent = frame
 
 button.MouseButton1Click:Connect(toggleAutoSlap)
 UserInputService.InputBegan:Connect(function(input, gameProcessed)
@@ -189,12 +196,7 @@ end)
 player.CharacterAdded:Connect(function(char)
     char:WaitForChild("Humanoid")
     if autoSlapEnabled then
-        task.spawn(function()
-            while autoSlapEnabled do
-                pcall(toggleDarkMatterSlap)
-                task.wait(0.05)
-            end
-        end)
+        startAutoSlap()
     end
 end)
 
