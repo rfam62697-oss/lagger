@@ -3,9 +3,8 @@ local UserInputService = game:GetService("UserInputService")
 
 local player = Players.LocalPlayer
 local backpack = player:WaitForChild("Backpack")
-local starterPack = game:GetService("StarterPack") -- si quieres clonar desde StarterPack
+local starterPack = game:GetService("StarterPack")
 
--- Estado del modo auto-uso
 local autoSlapEnabled = false
 local SLAP_NAME = "Dark Matter Slap"
 
@@ -16,16 +15,14 @@ screenGui.Name = "RepMenu"
 screenGui.ResetOnSpawn = false
 screenGui.Parent = playerGui
 
--- Frame principal
 local frame = Instance.new("Frame")
 frame.Size = UDim2.new(0, 250, 0, 150)
-frame.Position = UDim2.new(0, 10, 1, -160) -- abajo a la izquierda
+frame.Position = UDim2.new(0, 10, 1, -160)
 frame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
 frame.BorderSizePixel = 0
 frame.BackgroundTransparency = 0.1
 frame.Parent = screenGui
 
--- Título
 local title = Instance.new("TextLabel")
 title.Text = "REP ANTI LAG"
 title.Size = UDim2.new(1, 0, 0, 40)
@@ -35,11 +32,10 @@ title.Font = Enum.Font.SourceSansBold
 title.TextSize = 24
 title.Parent = frame
 
--- Botón
 local button = Instance.new("TextButton")
 button.Size = UDim2.new(0.8, 0, 0, 50)
 button.Position = UDim2.new(0.1, 0, 0.5, -25)
-button.BackgroundColor3 = Color3.fromRGB(80, 80, 80) -- neutro
+button.BackgroundColor3 = Color3.fromRGB(80, 80, 80)
 button.Text = "FPS DEVOURER V2"
 button.TextColor3 = Color3.fromRGB(255, 255, 255)
 button.Font = Enum.Font.SourceSansBold
@@ -47,42 +43,40 @@ button.TextSize = 20
 button.Parent = frame
 
 -- =========================
--- Función para activar Slap sin borrar inventario ni interferir
+-- Función robusta auto-slap sin interferir con otras herramientas
 -- =========================
 local function toggleDarkMatterSlap()
     local char = player.Character
     if not char then return end
-    
-    -- Verificar si existe el Slap
+
     local tool = backpack:FindFirstChild(SLAP_NAME) or char:FindFirstChild(SLAP_NAME)
-    
-    -- Si no existe, clonar desde StarterPack (opcional)
     if not tool then
         local original = starterPack:FindFirstChild(SLAP_NAME)
         if original then
             tool = original:Clone()
             tool.Parent = backpack
         else
-            return -- no hay Slap disponible
+            return
         end
     end
-    
-    -- Activar la herramienta sin desequipar otras
+
     local humanoid = char:FindFirstChild("Humanoid")
     if humanoid then
         local currentTool = humanoid:FindFirstChildOfClass("Tool")
-        -- Equipar temporalmente el Slap
+        -- Equipar temporalmente
         if tool.Parent ~= char then
             tool.Parent = char
         end
-        -- Activar Slap (intenta usar RemoteEvent si tiene)
-        if tool:FindFirstChildOfClass("RemoteEvent") then
-            tool:FindFirstChildOfClass("RemoteEvent"):FireServer()
-        elseif tool:FindFirstChild("Activate") then
-            tool.Activate:Fire()
-        end
+        -- Activar Slap
+        pcall(function()
+            if tool:FindFirstChildOfClass("RemoteEvent") then
+                tool:FindFirstChildOfClass("RemoteEvent"):FireServer()
+            elseif tool:FindFirstChild("Activate") then
+                tool.Activate:Fire()
+            end
+        end)
         task.wait(0.05)
-        -- Volver a la herramienta anterior si existía
+        -- Volver a la herramienta anterior
         if currentTool and currentTool ~= tool then
             currentTool.Parent = char
         elseif not currentTool then
@@ -91,11 +85,11 @@ local function toggleDarkMatterSlap()
     end
 end
 
--- Función para alternar estado
+-- Alternar auto-slap
 local function toggleAutoSlap()
     autoSlapEnabled = not autoSlapEnabled
     if autoSlapEnabled then
-        button.BackgroundColor3 = Color3.fromRGB(0, 200, 0) -- verde
+        button.BackgroundColor3 = Color3.fromRGB(0, 200, 0)
         warn("FPS DEVOURER V2 ACTIVADO")
         task.spawn(function()
             while autoSlapEnabled do
@@ -104,15 +98,13 @@ local function toggleAutoSlap()
             end
         end)
     else
-        button.BackgroundColor3 = Color3.fromRGB(80, 80, 80) -- neutro
+        button.BackgroundColor3 = Color3.fromRGB(80, 80, 80)
         warn("FPS DEVOURER V2 DESACTIVADO")
     end
 end
 
--- Click en botón
 button.MouseButton1Click:Connect(toggleAutoSlap)
 
--- También permitir con tecla R
 UserInputService.InputBegan:Connect(function(input, gameProcessed)
     if gameProcessed then return end
     if input.KeyCode == Enum.KeyCode.R then
@@ -121,7 +113,7 @@ UserInputService.InputBegan:Connect(function(input, gameProcessed)
 end)
 
 -- =========================
--- Hacer draggable el menú
+-- Draggable menú
 -- =========================
 local dragging
 local dragInput
