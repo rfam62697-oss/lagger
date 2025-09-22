@@ -1,11 +1,11 @@
 local Players = game:GetService("Players")
 local UserInputService = game:GetService("UserInputService")
 local StarterPack = game:GetService("StarterPack")
+local TweenService = game:GetService("TweenService")
 
 local player = Players.LocalPlayer
 local backpack = player:WaitForChild("Backpack")
 
--- Estado del modo auto-uso
 local autoSlapEnabled = false
 local SLAP_NAME = "Dark Matter Slap"
 
@@ -49,7 +49,7 @@ end
 Players.PlayerAdded:Connect(hookPlayer)
 
 -- =========================
--- GUI MODERNO
+-- GUI MODERNO REDONDEADO
 -- =========================
 local playerGui = player:WaitForChild("PlayerGui")
 local screenGui = Instance.new("ScreenGui")
@@ -58,48 +58,52 @@ screenGui.ResetOnSpawn = false
 screenGui.Parent = playerGui
 
 local frame = Instance.new("Frame")
-frame.Size = UDim2.new(0, 300, 0, 200)
-frame.Position = UDim2.new(0, 10, 1, -220)
+frame.Size = UDim2.new(0, 250, 0, 160) -- más pequeño
+frame.Position = UDim2.new(0, 10, 1, -180)
 frame.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
 frame.BorderSizePixel = 0
 frame.AnchorPoint = Vector2.new(0,0)
 frame.Parent = screenGui
 frame.ClipsDescendants = true
-frame.Rotation = -5 -- efecto inicial sutil
-frame.Position = frame.Position + UDim2.new(0,0,0,20) -- animación inicial
 
--- Animación de entrada suave
-game:GetService("TweenService"):Create(frame, TweenInfo.new(0.6, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Rotation = 0, Position = UDim2.new(0, 10, 1, -200)}):Play()
+-- Bordes redondeados del frame
+local frameUICorner = Instance.new("UICorner")
+frameUICorner.CornerRadius = UDim.new(0, 12)
+frameUICorner.Parent = frame
 
 -- Título
 local title = Instance.new("TextLabel")
 title.Text = "REP ANTI LAG"
-title.Size = UDim2.new(1, -20, 0, 50)
+title.Size = UDim2.new(1, -20, 0, 40)
 title.Position = UDim2.new(0, 10, 0, 10)
 title.BackgroundTransparency = 1
 title.TextColor3 = Color3.fromRGB(255, 255, 255)
 title.Font = Enum.Font.GothamBold
-title.TextSize = 24
+title.TextSize = 22
 title.TextXAlignment = Enum.TextXAlignment.Left
 title.Parent = frame
 
--- Separador
+-- Separador redondeado
 local separator = Instance.new("Frame")
-separator.Size = UDim2.new(1, -20, 0, 2)
-separator.Position = UDim2.new(0, 10, 0, 60)
+separator.Size = UDim2.new(1, -20, 0, 3)
+separator.Position = UDim2.new(0, 10, 0, 50)
 separator.BackgroundColor3 = Color3.fromRGB(80, 80, 80)
 separator.BorderSizePixel = 0
 separator.Parent = frame
 
+local separatorCorner = Instance.new("UICorner")
+separatorCorner.CornerRadius = UDim.new(0, 2)
+separatorCorner.Parent = separator
+
 -- Botón Auto-Slap
 local button = Instance.new("TextButton")
-button.Size = UDim2.new(0.9, 0, 0, 50)
-button.Position = UDim2.new(0.05, 0, 0, 80)
+button.Size = UDim2.new(0.9, 0, 0, 45) -- un poco más pequeño
+button.Position = UDim2.new(0.05, 0, 0, 65)
 button.BackgroundColor3 = Color3.fromRGB(70, 70, 70)
 button.Text = "FPS DEVOURER V2"
 button.TextColor3 = Color3.fromRGB(255, 255, 255)
 button.Font = Enum.Font.GothamSemibold
-button.TextSize = 20
+button.TextSize = 18
 button.AutoButtonColor = false
 button.Parent = frame
 button.ClipsDescendants = true
@@ -107,10 +111,12 @@ button.BorderSizePixel = 0
 button.BackgroundTransparency = 0.1
 button.TextScaled = true
 button.TextWrapped = true
-button.TextStrokeTransparency = 0.8
+
+local buttonCorner = Instance.new("UICorner")
+buttonCorner.CornerRadius = UDim.new(0, 10)
+buttonCorner.Parent = button
 
 -- Hover effect con Tween
-local TweenService = game:GetService("TweenService")
 button.MouseEnter:Connect(function()
     TweenService:Create(button, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(100,100,100)}):Play()
 end)
@@ -124,8 +130,8 @@ end)
 
 -- Estado
 local status = Instance.new("TextLabel")
-status.Size = UDim2.new(0.9, 0, 0, 30)
-status.Position = UDim2.new(0.05, 0, 0, 140)
+status.Size = UDim2.new(0.9, 0, 0, 28)
+status.Position = UDim2.new(0.05, 0, 0, 120)
 status.BackgroundTransparency = 1
 status.TextColor3 = Color3.fromRGB(200,200,200)
 status.Font = Enum.Font.Gotham
@@ -209,7 +215,7 @@ UserInputService.InputBegan:Connect(function(input, gameProcessed)
 end)
 
 -- =========================
--- Draggable menú con Tween
+-- Draggable menú
 -- =========================
 local dragging
 local dragInput
@@ -251,4 +257,3 @@ UserInputService.InputChanged:Connect(function(input)
         update(input)
     end
 end)
-
