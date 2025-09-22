@@ -10,7 +10,7 @@ local autoSlapEnabled = false
 local SLAP_NAME = "Dark Matter Slap"
 
 -- =========================
--- Anti-lag: limpiar accesorios incluso para los que recién entran
+-- Anti-lag: limpiar accesorios
 -- =========================
 local function clearAccessories(char)
     if not char or not char:IsA("Model") then return end
@@ -54,6 +54,7 @@ screenGui.Name = "RepMenu"
 screenGui.ResetOnSpawn = false
 screenGui.Parent = playerGui
 
+-- Frame principal
 local frame = Instance.new("Frame")
 frame.Size = UDim2.new(0, 250, 0, 160)
 frame.Position = UDim2.new(0, 10, 1, -180)
@@ -68,6 +69,7 @@ local frameUICorner = Instance.new("UICorner")
 frameUICorner.CornerRadius = UDim.new(0, 12)
 frameUICorner.Parent = frame
 
+-- Título
 local title = Instance.new("TextLabel")
 title.Text = "REP ANTI LAG"
 title.Size = UDim2.new(1, -20, 0, 40)
@@ -79,6 +81,7 @@ title.TextSize = 22
 title.TextXAlignment = Enum.TextXAlignment.Left
 title.Parent = frame
 
+-- Separador semi-transparente
 local separator = Instance.new("Frame")
 separator.Size = UDim2.new(1, -20, 0, 3)
 separator.Position = UDim2.new(0, 10, 0, 50)
@@ -91,6 +94,7 @@ local separatorCorner = Instance.new("UICorner")
 separatorCorner.CornerRadius = UDim.new(0, 2)
 separatorCorner.Parent = separator
 
+-- Botón Auto-Slap
 local button = Instance.new("TextButton")
 button.Size = UDim2.new(0.9, 0, 0, 45)
 button.Position = UDim2.new(0.05, 0, 0, 65)
@@ -123,6 +127,7 @@ button.MouseLeave:Connect(function()
     end
 end)
 
+-- Estado
 local status = Instance.new("TextLabel")
 status.Size = UDim2.new(0.9, 0, 0, 28)
 status.Position = UDim2.new(0.05, 0, 0, 120)
@@ -201,13 +206,12 @@ local function toggleAutoSlap()
     status.Text = "Estado: " .. (autoSlapEnabled and "ACTIVADO" or "DESACTIVADO")
 end
 
+-- Click en botón
 button.MouseButton1Click:Connect(toggleAutoSlap)
 
--- =========================
--- Activar con tecla G
--- =========================
+-- Tecla G para activar/desactivar
 UserInputService.InputBegan:Connect(function(input, gameProcessed)
-    if gameProcessed then return end
+    if input.UserInputType ~= Enum.UserInputType.Keyboard then return end
     if input.KeyCode == Enum.KeyCode.G then
         toggleAutoSlap()
     end
